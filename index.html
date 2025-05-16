@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mind Reader</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+    :root {
+      --glow-color: #ff00ff;
+    }
+    body {
+      background: #0a0a0a;
+      color: #e0e0e0;
+      font-family: 'Orbitron', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      transition: background 0.1s, color 0.1s;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+      text-shadow: 0 0 10px var(--glow-color);
+    }
+    p {
+      font-size: 1.2rem;
+      margin: 10px 0;
+    }
+    input, button {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1rem;
+      padding: 10px 15px;
+      border: 2px solid var(--glow-color);
+      background: transparent;
+      color: #e0e0e0;
+      margin: 5px;
+      outline: none;
+      transition: box-shadow 0.3s, border-color 0.1s, color 0.1s;
+    }
+    input:focus, button:hover {
+      box-shadow: 0 0 10px var(--glow-color);
+    }
+    button {
+      cursor: pointer;
+    }
+    .progress-container {
+      width: 100%;
+      max-width: 400px;
+      height: 20px;
+      background: #222;
+      border: 2px solid var(--glow-color);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 20px;
+      box-shadow: 0 0 10px var(--glow-color);
+      transition: background 0.1s, border-color 0.1s;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0;
+      background: var(--glow-color);
+      transition: width linear, background 0.1s;
+    }
+    #statusMessage {
+      margin-top: 15px;
+      font-size: 1.1rem;
+      text-shadow: 0 0 5px var(--glow-color);
+      transition: color 0.1s;
+    }
+    #resultMessage {
+      margin-top: 20px;
+      font-size: 1.5rem;
+      color: var(--glow-color);
+      text-shadow: 0 0 10px var(--glow-color);
+      display: none;
+      transition: color 0.1s;
+    }
+    /* Settings widget */
+    #settings {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 100;
+      transition: color 0.1s;
+    }
+    #settingsToggle {
+      font-size: 1.5rem;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--glow-color);
+      background: transparent;
+      color: #e0e0e0;
+      cursor: pointer;
+      transition: border-color 0.1s, color 0.1s;
+    }
+    #settingsPanel {
+      display: none;
+      flex-direction: column;
+      background: #222;
+      border: 2px solid var(--glow-color);
+      border-radius: 8px;
+      padding: 10px;
+      margin-top: 5px;
+      box-shadow: 0 0 10px var(--glow-color);
+      transition: background 0.1s, border-color 0.1s;
+    }
+    #settingsPanel.visible {
+      display: flex;
+    }
+    #settingsPanel label {
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+      color: #e0e0e0;
+      transition: color 0.1s;
+    }
+    #settingsPanel input[type="color"] {
+      margin-left: 5px;
+      vertical-align: middle;
+    }
+    #settingsPanel button {
+      margin-top: 5px;
+    }
+    #encourageMessage {
+      color: var(--glow-color);
+      text-shadow: 0 0 5px var(--glow-color);
+      margin-top: 10px;
+      font-size: 0.9rem;
+      min-height: 1.2em;
+      transition: color 0.1s;
+    }
+    /* Black & White strobe overrides */
+    body.bw {
+      background: #ffffff !important;
+      color: #000000 !important;
+    }
+    body.bw h1, body.bw p, body.bw #statusMessage, body.bw #resultMessage, body.bw #encourageMessage, body.bw #settingsPanel label {
+      color: #000000 !important;
+      text-shadow: none !important;
+    }
+    body.bw input, body.bw button, body.bw #settingsToggle {
+      border-color: #000000 !important;
+      color: #000000 !important;
+      box-shadow: none !important;
+      text-shadow: none !important;
+      background: transparent !important;
+    }
+    body.bw input::placeholder {
+      color: #000000 !important;
+    }
+    body.bw .progress-container {
+      background: #dddddd !important;
+      border-color: #000000 !important;
+      box-shadow: none !important;
+    }
+    body.bw .progress-bar {
+      background: #000000 !important;
+    }
+    body.bw #settingsPanel {
+      background: #dddddd !important;
+      border-color: #000000 !important;
+      box-shadow: none !important;
+    }
+  </style>
+</head>
+<body>
+  <h1>Mind Reader</h1>
+  <p>Think of a number between 1 and 10.</p>
+  <input type="number" id="numberInput" min="1" max="10" placeholder="Your number..." />
+  <button id="readButton">Read my mind!</button>
+
+  <div id="loader" style="display: none; width: 100%; max-width: 400px;">
+    <div class="progress-container">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <p id="statusMessage"></p>
+  </div>
+
+  <p id="resultMessage"></p>
+
+  <!-- Settings Widget -->
+  <div id="settings">
+    <button id="settingsToggle">⚙️</button>
+    <div id="settingsPanel">
+      <label>Glow color: <input type="color" id="colorPicker" value="#ff00ff"/></label>
+      <button id="clickMeButton">CLICK ME</button>
+      <p id="encourageMessage"></p>
+    </div>
+  </div>
+
+  <!-- Confetti library -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+  <!-- Horn sound -->
+  <audio id="hornAudio" preload="auto" src="https://cdn.pixabay.com/download/audio/2021/12/16/audio_2dc703f0aa.mp3?filename=air-horn-sound-effect-154239.mp3"></audio>
+  <script>
+    // Mind-reader logic
+    const readButton = document.getElementById('readButton');
+    const numberInput = document.getElementById('numberInput');
+    const loader = document.getElementById('loader');
+    const progressBar = document.getElementById('progressBar');
+    const statusMessage = document.getElementById('statusMessage');
+    const resultMessage = document.getElementById('resultMessage');
+    const loadingMessages = [
+      'Reading brainwaves...',
+      'Analysing beta functions...',
+      'Decoding synaptic patterns...',
+      'Finalizing results...'
+    ];
+    const stepDuration = 2000;
+    const totalDuration = stepDuration * loadingMessages.length;
+
+    readButton.addEventListener('click', () => {
+      const userNumber = numberInput.value;
+      if (!userNumber || userNumber < 1 || userNumber > 10) {
+        alert('Enter a valid number between 1 and 10!');
+        return;
+      }
+      progressBar.style.width = '0%';
+      statusMessage.textContent = '';
+      resultMessage.style.display = 'none';
+      resultMessage.textContent = '';
+      readButton.disabled = true;
+      numberInput.disabled = true;
+      loader.style.display = 'block';
+      let elapsed = 0, msgIndex = 0, percent = 0;
+      statusMessage.textContent = loadingMessages[msgIndex];
+      const intervalTime = 50;
+      const increase = 100 / (totalDuration / intervalTime);
+      const interval = setInterval(() => {
+        elapsed += intervalTime;
+        percent = Math.min(percent + increase, 100);
+        progressBar.style.width = percent + '%';
+        if (elapsed >= stepDuration * (msgIndex + 1) && msgIndex < loadingMessages.length - 1) {
+          msgIndex++;
+          statusMessage.textContent = loadingMessages[msgIndex];
+        }
+        if (elapsed >= totalDuration) {
+          clearInterval(interval);
+          loader.style.display = 'none';
+          resultMessage.textContent = `You are thinking of the number ${userNumber}`;
+          resultMessage.style.display = 'block';
+          readButton.disabled = false;
+          numberInput.disabled = false;
+        }
+      }, intervalTime);
+    });
+
+    // Settings toggle
+    const settingsToggle = document.getElementById('settingsToggle');
+    const settingsPanel = document.getElementById('settingsPanel');
+    settingsToggle.addEventListener('click', () => {
+      settingsPanel.classList.toggle('visible');
+    });
+
+    // Color picker
+    const colorPicker = document.getElementById('colorPicker');
+    colorPicker.addEventListener('input', e => {
+      document.documentElement.style.setProperty('--glow-color', e.target.value);
+    });
+
+    // CLICK ME encouragement and strobe logic
+    const clickMeButton = document.getElementById('clickMeButton');
+    const hornAudio = document.getElementById('hornAudio');
+    const encourageMessage = document.getElementById('encourageMessage');
+    let clickCount = 0;
+    let strobeInterval;
+    const encouragements = [
+      "Don't stop!",
+      "Click me again!",
+      "Keep going!",
+      "You're doing great!",
+      "Click click click!"
+    ];
+
+    clickMeButton.addEventListener('click', e => {
+      // play horn
+      hornAudio.currentTime = 0;
+      hornAudio.play().catch(() => {});
+      // confetti
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { x: e.clientX / window.innerWidth, y: e.clientY / window.innerHeight }
+      });
+      // encouragement
+      clickCount++;
+      const msg = encouragements[clickCount % encouragements.length];
+      encourageMessage.textContent = msg;
+      // strobe after 50 clicks
+      if (clickCount === 50) {
+        strobeInterval = setInterval(() => {
+          document.body.classList.toggle('bw');
+        }, 100);
+      }
+    });
+  </script>
+</body>
+</html>
